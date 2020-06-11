@@ -1,13 +1,150 @@
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: 'Laila' , cursive;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: whitesmoke;
 }
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+/* global styles  */
+
+
+:root{
+  --primary : #007bff;
+  --outline : #28a745;
+  --main: #0D0F35;
+  --mai: #090a2b;
+  --white: #ffffff;
+  --ease: all 0.3s ease 0s;
+}
+* {
+  box-sizing: border-box;
+  transition: .5s all ease;
+}
+.icon {
+  margin-right: 10px;
+}
+.card {
+  transition: .4s all ease;
+  background-color: white;
+  margin-bottom : 20px;
+  border-radius: 5px;
+  box-shadow: 3px 3px 10px 2px #888888;
+  cursor: pointer;
+  padding : 10px;
+}
+
+.centered {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+.backgroundFix {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+.relative {
+  position: relative;
+}
+
+.container {
+  width: 80%;
+  margin : auto;
+}
+
+
+
+/* page specific styles */
+
+.header{
+  display: flex;
+  justify-content: space-between;
+  padding : 15px 40px;
+  border-bottom: 1px solid #999;
+}
+.header .profileImage {
+  border: 1px solid blue;
+  border-radius: 50%;
+  padding : 5px;
+}
+.header .icon {
+  font-size: 30px;
+}
+.contentWrapper {
+  margin-top : 100px;
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(4, 1fr);
+  text-align: center;
+}
+.tileImage {
+  height: 200px;
+  width: 100%;
+  background-image: url('/images/tile.jpg');
+  border-radius: 10px;
+}
+
+/* topic page style section */
+.topicWrapper {
+  width: 90%;
+  margin : auto;
+  margin-top: 30px;
+  margin-bottom: 100px;
+}
+.playerSection {
+ position: relative;
+ height: 70vh;
+ margin-top: 50px;
+}
+.playerSection .vidPlayer, .playerSection .deliverablesContainer {
+  margin-right: 320px;
+}
+.playerSection .vidPlayer video {
+  width: 100%;
+}
+
+.sideContent {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 300px;
+  overflow-y: scroll;
+  height: 50vh;
+}
+.sideLinks video {
+  height: 80px;
+  width: 100%;
+  display: block;
+}
+.sideLinks {
+  display : grid;
+  grid-template-columns: 1.5fr 2fr;
+  gap : 10px;
+  margin-bottom: 15px;
+  cursor: pointer;
+}
+.docsImage {
+  background-image: url('/images/docsImg.png');
+  height: 80px;
+  width: 100%;
+}
+.deliverablesContainer {
+  height: 100%;
+}
+.submissionWrapper {
+  margin-top: 30px;
+}
+
+/* Comment section style */
+
+.commentSection {
+  margin-top: 50px;
 }
