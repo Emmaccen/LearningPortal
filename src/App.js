@@ -2,6 +2,7 @@ import React from 'react';
 import {BrowserRouter as Router, Switch, Route } from 'react-router-dom'
 import Content from './components/Content'
 import Topic from './components/Topic'
+import Home from './components/Home'
 
 const firebase = require("firebase");
 // Required for side-effects
@@ -28,7 +29,8 @@ function App() {
     <Router>
       <div className="App">
         <Switch>
-          <Route path='/' exact component={Content}></Route>
+          <Route path='/' exact component={Home}></Route>
+          <Route path='/Content' exact component={Content}></Route>
           <Route path='/Content/Topic/:id' exact component={Topic}></Route>
         </Switch>
       </div>

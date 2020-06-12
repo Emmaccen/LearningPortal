@@ -11,12 +11,13 @@ require("firebase/firestore");
 
 
 function Vids (props) {
+    let desc = props.desc + ''
     return(
         <div onClick={()=> props.handleClick(props)} className='sideLinks'>
             <video src={props.url}></video>
             <div>
-                <h6>{props.title}</h6>
-                <p>{props.desc}</p>
+                <h6>{props.title.length > 17 ? props.title.toString().slice(0,17).concat('...') : props.title}</h6>
+                <p>{desc.length > 50 ? desc.toString().slice(0,50).concat(' ...') : desc}</p>
             </div>
         </div>
     )
@@ -26,13 +27,23 @@ function Docs (props) {
         <div onClick={() => props.handleDocClick(props)} className='sideLinks'>
             <div className='backgroundFix docsImage' controls></div>
             <div>
-                <h6>{props.title}</h6>
-                <p>{props.instruction}</p>
+                <h6>{props.title.length > 17 ? props.title.toString().slice(0,17).concat('...') : props.title}</h6>
+                <p>{props.instruction.length > 50 ? props.instruction.toString().slice(0,50).concat(' ...') : props.instruction}</p>
             </div>
         </div>
     )
 }
-
+function Comments (props) {
+    return (
+        <div className='comments'>
+            <div className='accImg backgroundFix'></div>
+            <div className='commentDetails'>
+                <h5>{props.time}</h5>
+                <p>{props.comment}</p>
+            </div>
+        </div>
+    )
+}
 
 
 class Topic extends React.Component {
@@ -40,22 +51,14 @@ class Topic extends React.Component {
     constructor (props) {
         super (props)
         this.state = {
+            onScreen : '',
             isVideo : true,
-            currentVideoId : '',
-            currentTitle : '',
-            currentTitleDesc : '',
-            currentVideoSrc : '',
-            currentVideTitle : '',
-            currentVideoDesc : '',
+            currentVideo : {title : '', uniqueId : '', url : '', description : ''},
             videos : [{title : '', url : '', desc : ''}],
-            deliverables : [
-                {deliverables : {date : '',id : '', instruction : '', point : '', title : ''}}
-            ],
-            currentDocTitle : '',
-            CurrentDocInstruction : '',
-            currentDocPoints : '',
-            CurrentDocDate : '',
-            currentDocId : ''
+            deliverables : [{date : '',id : '', instruction : '', point : '', title : ''}],
+            currentDoc : {date: "",id: "",instruction: "", point: "", title: "",uniqueId: ""},
+            comments : [{time : '', comment : ''}],
+            totalComments : 0
         }
 
         this.handleClick = this.handleClick.bind(this)
@@ -67,7 +70,9 @@ class Topic extends React.Component {
         const db = firebase.firestore()
         let id = this.props.match.params.id
         let vidList = []
+        let commentList = []
         let documentList = []
+        let totalComments = 0
         db.collection('contents').doc(id).get()
         .then(result => {
             this.setState({
@@ -79,22 +84,33 @@ class Topic extends React.Component {
         .then(result => {
             result.forEach(video => {
                 vidList.push(video.data())
-                // console.log(video.data().url)
             })
             this.setState({
-                currentVideTitle : vidList[0].title,
-                currentVideoDesc : vidList[0].description,
-                currentVideoSrc : vidList[0].url,
-                videos : vidList
+                currentVideo : vidList[0],
+                videos : vidList,
+                onScreen : 'video'
+            })
+            db.collection('videos').doc(id).collection(id).doc(vidList[0].uniqueId).collection('comments')
+            .get().then(comments => {
+                comments.forEach(comment => {
+                    commentList.push(comment.data())
+                    totalComments ++
+                })
+                this.setState({
+                    comments : commentList.reverse(),
+                    totalComments : totalComments
+                })
             })
             
         })
         db.collection('deliverables').doc(id).collection(id).get()
         .then(documents => {
             documents.forEach(doc => {
-                documentList.push(doc.data())
+                documentList.push(doc.data().deliverables)
+                console.log(doc.data().deliverables)
             })
             this.setState({
+                currentDoc : documentList[0],
                 deliverables : documentList
             })
         })
@@ -103,10 +119,9 @@ class Topic extends React.Component {
     VidDisplay () {
         return (
             <div className='vidPlayer'>
-                {/* https://firebasestorage.googleapis.com/v0/b/devlookup.appspot.com/o/bD2IkGhy98uux5MDNa5j%2FAsphalt%209_%20Legends%20upload.mp4?alt=media&token=31f84de5-174e-424f-ab74-3fe79afc1aca */}
-                <video src={this.state.currentVideoSrc} controls></video>
-                <h3>{this.state.currentVideTitle}</h3>
-                <p>{this.state.currentVideoDesc}</p>
+                <video src={this.state.currentVideo.url} controls></video>
+                <h3>{this.state.currentVideo.title}</h3>
+                <p>{this.state.currentVideo.description}</p>
                 <button>Hide Description</button>
             </div>
         )
@@ -115,28 +130,31 @@ class Topic extends React.Component {
         return (
             <div className='deliverablesContainer'>
                 <div className='docHeader'>
-                    <h1>{this.state.currentDocTitle}</h1>
-                    <h3>{this.state.currentDocPoints}</h3>
+                    <h1>{this.state.currentDoc.title}</h1>
+                    <h3>{this.state.currentDoc.point} Points</h3>
                 </div>
                 <div>
-                    <p>{this.state.CurrentDocDate}</p>
-                    <p>{this.state.CurrentDocInstruction}</p>
+                    <p>Due Date : {this.state.currentDoc.date}</p>
+                    <p>Instructions : {this.state.currentDoc.instruction}</p>
                     <button>Hide Description</button>
                 </div>
-                <div className='centered'>
+                <div className='submissionWrapper centered'>
                     <div className='card'>
                         <div className='submissionHeader'>
                             <h5>Your Work</h5>
                             <p>Assigned</p>
                         </div>
                         <div className='workUpload'>
-                            <button><span className='icon icon-upload'></span>Add Or Create</button>
+                            <span className='icon icon-upload'>Add Or Create</span>
                             <button>Mark As Done</button>
                         </div>
                     </div>
-                    <div className='card'>
-                        <img alt='profileImage'></img>
-                        <textarea></textarea>
+                    <div className='card submissionComment'>
+                        <div className='accImg backgroundFix'></div>
+                        <input placeholder='Private Comment ...' id='privateComment'></input>
+                        <div className='alignBase'>
+                            <span className='icon icon-share'></span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -146,25 +164,79 @@ class Topic extends React.Component {
     
     handleClick (props) {
         console.log(props)
-        this.setState({
-            isVideo : true,
-            currentVideTitle : props.title,
-            currentVideoDesc : props.description,
-            currentVideoSrc : props.url
-        })
+        const db = firebase.firestore()
+        const commentList = []
+        let totalComments = 0
+        let id = this.props.match.params.id
+        db.collection('videos').doc(id).collection(id).doc(props.uniqueId).collection('comments')
+            .get().then(comments => {
+                comments.forEach(comment => {
+                    commentList.push(comment.data())
+                    totalComments ++
+                })
+                this.setState({
+                    totalComments : totalComments,
+                    comments : commentList.reverse(),
+                    isVideo : true,
+                    currentVideo : {title : props.title, uniqueId : props.uniqueId, url : props.url, description : props.description},
+                    onScreen : 'video'
+                })
+            })
     }
 
     handleDocClick (props) {
         console.log(props)
-        this.setState({
-            isVideo : false,
-            currentDocTitle : props.title,
-            CurrentDocInstruction : props.instruction,
-            currentDocPoints : props.point,
-            CurrentDocDate : props.date,
-            currentDocId : props.id
-        })
+        const db = firebase.firestore()
+        const commentList = []
+        let totalComments = 0
+        let id = this.props.match.params.id
+        db.collection('deliverables').doc(id).collection(id).doc(props.uniqueId).collection('comments')
+            .get().then(comments => {
+                comments.forEach(comment => {
+                    commentList.push(comment.data())
+                    totalComments ++
+                })
+                this.setState({
+                    totalComments : totalComments,
+                    comments : commentList.reverse(),
+                    isVideo : false,            
+                    currentDoc : { 
+                        date: props.date, id: props.id,instruction: props.instruction, 
+                        point: props.point, title: props.title,uniqueId: props.uniqueId
+                    },
+                    onScreen : 'document'
+                })
+            })
     }
+
+    handleComment () {
+        const db = firebase.firestore()
+        let id = this.props.match.params.id
+        let message = $('#commentMessage').val()
+        if(this.state.isVideo && message+ '' !== ''){
+            console.log(this.state.currentVideo)
+            let current = this.state.currentVideo
+            db.collection('videos').doc(id).collection(id).doc(current.uniqueId)
+            .collection('comments').doc(new Date().toString()).set({
+                comment : message,
+                time : new Date().toLocaleString()
+            }).then(()=> {
+                handleNotification('Comment Added')
+                $('#commentMessage').val('')
+            })
+
+        }else if(!this.state.isVideo && message+ '' !== '') {
+            let current = this.state.currentDoc
+            db.collection('deliverables').doc(id).collection(id).doc(current.uniqueId)
+            .collection('comments').doc(new Date().toString()).set({
+                comment : message,
+                time : new Date().toLocaleString()
+            }).then(()=> {handleNotification('Comment Added')})
+        }else if( message+ '' === '') {
+            handleNotification('Comment Cannot Be Empty :(')
+        }
+    }
+
     render () {
 
         const videos = this.state.videos.map(vids => {
@@ -172,7 +244,7 @@ class Topic extends React.Component {
                 < Vids 
                 url = {vids.url}
                 title = {vids.title}
-                desc = {vids.desc}
+                desc = {vids.description}
                 handleClick = {()=> this.handleClick(vids)}
                 />
             )
@@ -181,45 +253,60 @@ class Topic extends React.Component {
         const documents = this.state.deliverables.map(docs => {
             return (
                 < Docs 
-                title = {docs.deliverables.title}
-                instruction = {docs.deliverables.instruction}
-                handleDocClick = {() => this.handleDocClick(docs.deliverables)}
+                title = {docs.title}
+                instruction = {docs.instruction}
+                handleDocClick = {() => this.handleDocClick(docs)}
                 />
             )
         })
 
+        const comments = this.state.comments.map(comment => {
+            return <Comments
+            comment = {comment.comment}
+            time = {comment.time}
+            />
+        })
+
         return (
-            <div className='topicWrapper'>
-               <h2>{this.state.currentTitle}</h2>
-               <p>{this.state.currentTitleDesc}</p>
-               <button>Hide description</button>
-               <div className='playerSection'>
-                    {this.state.isVideo ? <this.VidDisplay/> : <this.DocDisplay />}
-                    <div className='sideContent'>
-                        {/* <div className='sideNavigation'>
-                            <div className='navs'>
-                                <span onClick={''} className='icon icon-insert-template'></span>
-                                <span onClick={''} className='icon icon-insert-template'></span>
+                    <div className='topicPage backgroundFix'>
+                        <div className='topicWrapper'>
+                            <div className='currentCourse'>
+                                <h2>{this.state.currentTitle}</h2>
+                                <p>{this.state.currentTitleDesc}</p>
+                                <button>Hide Description</button>
                             </div>
-                        </div> */}
-                       {videos}
-                       {documents}
-                    </div>
-                    <div>
-                        <div className='container commentSection'>
-                                <p>6,9302 Comments</p>
-                                <div className='commentInput'>
-                                    <img alt='user Image'></img>
-                                    <textarea></textarea>
-                                </div>
-                                <div className='comments'>
-                                    <img></img>
-                                    <p>some lazy comments in the comment section haha ! :) </p>
-                                </div>
+                            <div className='playerSection'>
+                                    {this.state.isVideo ? <this.VidDisplay/> : <this.DocDisplay />}
+                                    <div className='sideContent'>
+                                        {/* <div className='sideNavigation'>
+                                            <div className='navs'>
+                                                <span onClick={''} className='icon icon-insert-template'></span>
+                                                <span onClick={''} className='icon icon-insert-template'></span>
+                                            </div>
+                                        </div> */}
+                                    {videos}
+                                    {documents}
+                                    </div>
+                                    <div>
+                                        <div className='commentSection'>
+                                                <hr></hr>
+                                                <p>{this.state.totalComments} Comments</p>
+                                                <div className='commentInput'>
+                                                    <div className='accImg backgroundFix'></div>
+                                                    <input placeholder='Add Comment ...' id='commentMessage'></input>
+                                                    <div className='alignBase'>
+                                                        <span className='icon icon-share' onClick={() => this.handleComment()}></span>
+                                                    </div>
+                                                </div>
+                                        </div>
+                                        <div>
+                                            {comments}
+                                        </div>
+                                    </div>
+                            </div>
                         </div>
+                        <Notification />
                     </div>
-               </div>
-            </div>
         )
     }
 }

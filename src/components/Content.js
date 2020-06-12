@@ -11,9 +11,11 @@ require("firebase/firestore");
 
 function Tiles (props) {
     return (
-        <div>
+        <div className='titleCard'>
             <div className='backgroundFix tileImage'></div>
-            <p onClick={props.handleClick}>{props.title}</p>
+            <h5>{props.title.length > 17 ? props.title.toString().slice(0,17).concat('...') : props.title}</h5>
+            <p>{props.desc.length > 140 ? props.desc.toString().slice(0,140).concat(' ...') : props.desc}</p>
+            <button onClick={props.handleClick}>View</button>
         </div>
     )
 }
@@ -34,10 +36,7 @@ class Content extends React.Component {
         db.collection('contents').get()
         .then(snapShot => {
             snapShot.forEach(doc => {
-                contents.push({
-                    title : doc.data().title,
-                    id : doc.id
-                })
+                contents.push(doc.data())
             })
             this.setState({
                 content : contents
@@ -59,13 +58,14 @@ class Content extends React.Component {
             return (
                 <Tiles 
                 title = {data.title}
-                handleClick = {() => this.handleClick(data.id)}
+                desc = {data.desc}
+                handleClick = {() => this.handleClick(data.uniqueId)}
                 key = {data.id}
                 />
             )
         })
         return (
-            <div>
+            <div className='contentBg backgroundFix'>
                 <Header />
                 <div className='container contentWrapper'>
                     {content}
