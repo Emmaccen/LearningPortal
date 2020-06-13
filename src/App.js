@@ -8,6 +8,7 @@ const firebase = require("firebase");
 // Required for side-effects
 require("firebase/firestore");
 
+
  // Your web app's Firebase configuration
  var firebaseConfig = {
   apiKey: "AIzaSyAp-SRKzgn00MHLuKUcVmW0ZQh7y6d1CQM",
@@ -23,19 +24,23 @@ require("firebase/firestore");
 firebase.initializeApp(firebaseConfig);
 firebase.analytics();
 
+class App extends React.Component {
 
-function App() {
-  return (
-    <Router>
-      <div className="App">
-        <Switch>
-          <Route path='/' exact component={Home}></Route>
-          <Route path='/Content' exact component={Content}></Route>
-          <Route path='/Content/Topic/:id' exact component={Topic}></Route>
-        </Switch>
-      </div>
-    </Router>
-  );
+  render() {
+    console.log('state >>>' , this.state)
+      return (
+        <Router>
+          <div className="App">
+            <Switch>
+              <Route path='/' exact component = { Home }></Route>
+              <Route path='/Content' exact component = { Content }></Route>
+              <Route path='/Content/Topic/:id' exact component = { Topic }></Route>
+            </Switch>
+          </div>
+        </Router>
+      );
+}
+
 }
 
 export default App;

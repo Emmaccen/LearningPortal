@@ -116,13 +116,21 @@ class Topic extends React.Component {
         })
     }
 
+    toggle (event, id) {
+        const target = event.target
+            $(id).slideToggle( 0, function() {
+              // Animation complete.
+              $(target).text() === 'Hide Description' ? $(target).text("Show Description") : $(target).text('Hide Description')
+            });
+    }
+
     VidDisplay () {
         return (
             <div className='vidPlayer'>
-                <video src={this.state.currentVideo.url} controls></video>
+                <video src={this.state.currentVideo.url} controls controlsList='nodownload'></video>
                 <h3>{this.state.currentVideo.title}</h3>
-                <p>{this.state.currentVideo.description}</p>
-                <button>Hide Description</button>
+                <p id='vidDescToggle'>{this.state.currentVideo.description}</p>
+                <button onClick={ e => this.toggle(e,'#vidDescToggle')}>Hide Description</button>
             </div>
         )
     }
@@ -131,7 +139,8 @@ class Topic extends React.Component {
             <div className='deliverablesContainer'>
                 <div className='docHeader'>
                     <h1>{this.state.currentDoc.title}</h1>
-                    <h3>{this.state.currentDoc.point} Points</h3>
+                    <h3><span className='icon icon-star-full'></span>
+                    {this.state.currentDoc.point} Points</h3>
                 </div>
                 <div>
                     <p>Due Date : {this.state.currentDoc.date}</p>
@@ -212,26 +221,65 @@ class Topic extends React.Component {
     handleComment () {
         const db = firebase.firestore()
         let id = this.props.match.params.id
+        let commentList = []
+        let totalComments = 0
         let message = $('#commentMessage').val()
         if(this.state.isVideo && message+ '' !== ''){
             console.log(this.state.currentVideo)
             let current = this.state.currentVideo
+            let moment = new Date().toLocaleString()
+            let regEx = new RegExp('/', 'g')
+            let date = moment.replace(regEx, '-')
             db.collection('videos').doc(id).collection(id).doc(current.uniqueId)
             .collection('comments').doc(new Date().toString()).set({
                 comment : message,
-                time : new Date().toLocaleString()
+                time : date
             }).then(()=> {
-                handleNotification('Comment Added')
-                $('#commentMessage').val('')
+                 // add comment to page 
+                 db.collection('videos').doc(id).collection(id).doc(current.uniqueId).collection('comments')
+                 .get().then(comments => {
+                 comments.forEach(comment => {
+                     commentList.push(comment.data())
+                     totalComments ++
+                 })
+                 this.setState({
+                     comments : commentList.reverse(),
+                     totalComments : totalComments
+                 })
+                 handleNotification('Comment Added')
+                 $('#commentMessage').val('')
+             })
+
             })
 
         }else if(!this.state.isVideo && message+ '' !== '') {
             let current = this.state.currentDoc
+            let moment = new Date().toLocaleString()
+            let regEx = new RegExp('/', 'g')
+            let date = moment.replace(regEx, '-')
             db.collection('deliverables').doc(id).collection(id).doc(current.uniqueId)
             .collection('comments').doc(new Date().toString()).set({
                 comment : message,
-                time : new Date().toLocaleString()
-            }).then(()=> {handleNotification('Comment Added')})
+                time : date
+            }).then(()=> {
+                // add comment to page 
+                db.collection('deliverables').doc(id).collection(id).doc(current.uniqueId).collection('comments')
+                .get().then(comments => {
+                comments.forEach(comment => {
+                    commentList.push(comment.data())
+                    totalComments ++
+                })
+                this.setState({
+                    comments : commentList.reverse(),
+                    totalComments : totalComments
+                })
+                handleNotification('Comment Added')
+                $('#commentMessage').val('')
+            })
+
+            })
+
+
         }else if( message+ '' === '') {
             handleNotification('Comment Cannot Be Empty :(')
         }
@@ -269,11 +317,12 @@ class Topic extends React.Component {
 
         return (
                     <div className='topicPage backgroundFix'>
+                        <Header />
                         <div className='topicWrapper'>
                             <div className='currentCourse'>
                                 <h2>{this.state.currentTitle}</h2>
-                                <p>{this.state.currentTitleDesc}</p>
-                                <button>Hide Description</button>
+                                <p id='parentDesc'>{this.state.currentTitleDesc}</p>
+                                <button onClick={ e => this.toggle(e,'#parentDesc')}>Hide Description</button>
                             </div>
                             <div className='playerSection'>
                                     {this.state.isVideo ? <this.VidDisplay/> : <this.DocDisplay />}

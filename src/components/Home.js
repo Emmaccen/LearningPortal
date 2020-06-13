@@ -5,14 +5,20 @@ import Header from './Header'
 import { firestore } from 'firebase';
 import {Notification} from './Notification'
 import {handleNotification} from './Notification'
-import { GoogleLogin, GoogleLogout} from 'react-google-login';
 import Content from './Content'
+// import { GoogleLogin, GoogleLogout} from 'react-google-login';
+import GoogleLogin from 'react-google-login';
+
+const responseGoogle = (response) => {
+  console.log(response);
+}
+
 {/* <div class="g-signin2" data-onsuccess="onSignIn"></div> */}
 const firebase = require("firebase");
 // Required for side-effects
 require("firebase/firestore");
 
-function LandingPage () {
+function LandingPage (props) {
     return (
         <div className='backgroundFix homeWrapper'>
                 <div className='centered jumbotron'>
@@ -24,7 +30,7 @@ function LandingPage () {
                     </div>
                     <div className='oauthBox'>
                         <p><span>Login</span> | <span>SignUp</span></p>
-                        <form onSubmit={ e => this.handleSubmit(e)}>
+                        <form onSubmit={ e => props.loginUser(e)}>
                             <label for='mail'>Email</label>
                             <input id='mail' type='email' placeholder='Email'></input>
                             <label for='password'>Password</label>
@@ -38,15 +44,34 @@ function LandingPage () {
     )
 }
 
-function onSignIn(googleUser) {
-    var profile = googleUser.getBasicProfile();
-    console.log('ID: ' + profile.getId()); // Do not send to your backend! Use an ID token instead.
-    console.log('Name: ' + profile.getName());
-    console.log('Image URL: ' + profile.getImageUrl());
-    console.log('Email: ' + profile.getEmail()); // This is null if the 'email' scope is not present.
-  }
+  
 
-  function  loginUser () {
+class Home extends React.Component {
+
+    constructor() {
+        super()
+        this.state = {
+            isLoggedIn : false
+        }
+
+        this.loginUser = this.loginUser.bind(this)
+    }
+
+    componentDidMount() {
+        firebase.auth().onAuthStateChanged((user) =>  {
+            // console.log(user)
+            if (user) {
+              // User is signed in.
+              this.setState({ isLoggedIn : false })
+            } else {
+              // User is signed out.
+              this.setState({ isLoggedIn : false })
+            }
+          })
+ }
+
+ loginUser (e) {
+     e.preventDefault()
     let btn = document.getElementById('loginButton')
     let mail = $('#mail').val()
     let password = $('#password').val()
@@ -58,10 +83,13 @@ function onSignIn(googleUser) {
         // show progress animation
         handleNotification('Processing Login ...')
         // authenticate user
-        firebase.auth().signInWithEmailAndPassword(mail, password).then(function success() {
+        firebase.auth().signInWithEmailAndPassword(mail, password).then( success => {
             // remove progress animation
             // Seccessfully logged in
             btn.removeAttribute('disabled')
+            this.setState({
+                isLoggedIn : true
+            })
           
         }).catch(function(error) {
             // Handle Errors here.
@@ -73,39 +101,11 @@ function onSignIn(googleUser) {
         
     }
 }
-
-class Home extends React.Component {
-
-    constructor() {
-        super()
-        this.state = {
-            isLoggedIn : false
-        }
-    }
-
-    componentDidMount() {
-        firebase.auth().onAuthStateChanged((user) =>  {
-            // console.log(user)
-            if (user) {
-              // User is signed in.
-              this.setState({ isLoggedIn : true })
-            } else {
-              // User is signed out.
-              this.setState({ isLoggedIn : false })
-            }
-          })
- }
-
-    handleSubmit (e) {
-        e.preventDefault()
-        loginUser()
-    }
-
     render () {
 
         return (
             <div>
-                {this.state.isLoggedIn ? this.props.history.push(`/Content`) : <LandingPage />}
+                {this.state.isLoggedIn ? this.props.history.push(`/Content`) : <LandingPage loginUser = {this.loginUser} />}
             </div>
         )
     }

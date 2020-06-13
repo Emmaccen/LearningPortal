@@ -10,17 +10,23 @@ import {handleNotification} from './Notification'
 
 class Header extends React.Component {
 
-    constructor () {
-        super () 
+    constructor (props) {
+        console.log('header props >', props)
+        super (props) 
         this.state = {}
     }
+
+    
 
     render () {
         return (
             <div>
                 <div className='header'>
                     <img src='/Logo.svg' alt='Company Logo' ></img>
-                    <span className='profileImage icon icon-profile-male'></span>
+                    <div>
+                        {/* <p></p> */}
+                        <div onClick={() => this.logOutUser} className='backgroundFix profileImage'></div>
+                    </div>
                 </div>
             </div>
         )

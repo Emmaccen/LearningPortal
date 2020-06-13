@@ -8,6 +8,7 @@
     "@testing-library/user-event": "^7.2.1",
     "firebase": "^7.15.0",
     "jquery": "^3.5.1",
+    "netlify": "^4.3.1",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-google-login": "^5.1.20",
