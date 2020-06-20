@@ -9,6 +9,7 @@ const firebase = require("firebase");
 // Required for side-effects
 require("firebase/firestore");
 
+var file = ''
 
 function Vids (props) {
     let desc = props.desc + ''
@@ -67,6 +68,38 @@ class Topic extends React.Component {
     }
 
     componentDidMount () {
+
+
+        var name, email, photoUrl, uid, emailVerified;
+
+        firebase.auth().onAuthStateChanged((isLogged) =>  {
+            // console.log(isLogged)
+            if (isLogged) {
+              // User is signed in.
+              var user = firebase.auth().currentUser;
+              console.log(user)
+              console.log('user')
+              name = user.displayName;
+              email = user.email;
+              photoUrl = user.photoURL;
+              emailVerified = user.emailVerified;
+              uid = user.uid;
+              this.setState({
+                  name,
+                  profileUrl : photoUrl,
+                  email,
+                  uid
+              })
+              console.log(user)
+
+            } else {
+              // User is signed out.
+              handleNotification('user is signed out !')
+              
+            }
+          })
+
+
         const db = firebase.firestore()
         let id = this.props.match.params.id
         let vidList = []
@@ -144,8 +177,8 @@ class Topic extends React.Component {
                 </div>
                 <div>
                     <p>Due Date : {this.state.currentDoc.date}</p>
-                    <p>Instructions : {this.state.currentDoc.instruction}</p>
-                    <button>Hide Description</button>
+                    <p id='vidDescToggle'>Instructions : {this.state.currentDoc.instruction}</p>
+                    <button onClick={ e => this.toggle(e,'#vidDescToggle')}>Hide Description</button>
                 </div>
                 <div className='submissionWrapper centered'>
                     <div className='card'>
@@ -154,22 +187,96 @@ class Topic extends React.Component {
                             <p>Assigned</p>
                         </div>
                         <div className='workUpload'>
-                            <span className='icon icon-upload'>Add Or Create</span>
-                            <button>Mark As Done</button>
+                        <input onChange={ e => this.handleSubmit(e)} type='file' name="file" id="file" class="inputfile"></input>
+                        <label for="file"><span className='icon icon-upload'></span>Add Or Create</label>
+                            <button id='markBtn' disabled >Mark As Done</button>
                         </div>
                     </div>
                     <div className='card submissionComment'>
                         <div className='accImg backgroundFix'></div>
                         <input placeholder='Private Comment ...' id='privateComment'></input>
                         <div className='alignBase'>
-                            <span className='icon icon-share'></span>
+                            <span id='privateBtn' disabled className='icon icon-share'></span>
                         </div>
                     </div>
                 </div>
             </div>
         )
     }
-    
+    mark () {
+        const button = $('#markBtn')
+        const db = firebase.firestore()
+        const ref =  db.collection('submissions').doc(this.state.currentDoc.uniqueId)
+        .collection('submitted').doc(this.state.uid)
+        ref.update({
+            completed : true
+        }).then( () => {
+            handleNotification("Submission Marked As Completed")
+            button.text('Completed')
+            button.attr('disabled', 'disabled')
+            button.css('backgroundColor', 'grey')
+        } ).catch(e => {
+            handleNotification(e)
+        })
+    }
+
+    privateComment () {
+        const message = $('#privateComment').val()
+        const db = firebase.firestore()
+        const ref =  db.collection('submissions').doc(this.state.currentDoc.uniqueId)
+        .collection('submitted').doc(this.state.uid)
+        ref.update({
+            privateComment : message
+        }).then( () => {
+            handleNotification("Comment Updated")
+            $('#privateComment').val('')
+        } ).catch(e => {
+            handleNotification(e)
+        })
+    }
+
+    handleSubmit (e) {
+        e.preventDefault()
+        const db = firebase.firestore()
+        const storageRef = firebase.storage().ref()
+        file = e.target.files[0]
+
+          handleNotification('Processing, Please wait ...')
+          // upload submission
+            storageRef.child(`${this.state.currentDoc.title}/${file.name}`).put(file).then(() => {
+            handleNotification('File Uploaded')
+            storageRef.child(`${this.state.currentDoc.title}/${file.name}`).getDownloadURL().then( url => {
+            db.collection('submissions').doc(this.state.currentDoc.uniqueId).collection('submitted')
+            .doc(this.state.uid).set({
+                fileUrl : url,
+                name : this.state.email,
+                profileUrl : this.state.profileUrl,
+                email : this.state.email,
+                time : new Date().toString(),
+                completed : false,
+                privateComment : '',
+                mark : '',
+                uid : this.state.uid,
+                assignmentId : this.state.currentDoc.uniqueId,
+                contentId : this.state.currentDoc.id,
+                point : this.state.currentDoc.point
+
+            }
+            ).then(()=> {
+                handleNotification('Task Submitted')
+                $('#markBtn').css('backgroundColor', 'orange')
+                $('#privateBtn').css('color', 'orange')
+                $('#markBtn').removeAttr('disabled')
+                $('#privateBtn').removeAttr('disabled')
+                $('#markBtn').click(()=> {this.mark()})
+                $('#privateBtn').click(()=> {this.privateComment()})
+
+            }).catch(e => handleNotification(e))
+        }).then(()=> {})
+
+    }).catch(e => {handleNotification(e)})
+
+    }
     
     handleClick (props) {
         console.log(props)
